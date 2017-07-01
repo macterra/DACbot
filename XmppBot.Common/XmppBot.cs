@@ -129,7 +129,7 @@ namespace XmppBot.Common
 
                 switch (line.Command)
                 {
-                    case "help":
+                    case "xhelp":
                         var helpText = new StringBuilder();
                         var plist = Plugins.ToList();
                         plist.Sort((c1, c2) => c1.Name.CompareTo(c2.Name));
