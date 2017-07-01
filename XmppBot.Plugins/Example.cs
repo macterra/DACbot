@@ -18,10 +18,10 @@ namespace XmppBot.Plugins
             switch (line.Command.ToLower())
             {
                 case "smack":
-                    return String.Format("{0} smacks {1} around with a large trout", line.User, line.Args.FirstOrDefault() ?? "your mom");
+                    return String.Format("{0} smacks {1} around with a large trout", line.User.Mention, line.Args.FirstOrDefault() ?? "your mom");
 
                 case "hug":
-                    return String.Format("{0} hugs {1}", line.User, line.Args.FirstOrDefault() ?? "themself");
+                    return String.Format("{0} hugs {1}", line.User.Mention, line.Args.FirstOrDefault() ?? "themself");
 
                 case "help":
                     return String.Format("Right now the only commands I know are !smack [thing] and !hug [thing].");
