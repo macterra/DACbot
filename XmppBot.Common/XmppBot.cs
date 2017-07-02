@@ -96,7 +96,7 @@ namespace XmppBot.Common
             {
                 Jid jid = new Jid(room + "@" + _config.ConferenceServer);
                 mucManager.JoinRoom(jid, _config.RoomNick);
-                log.InfoFormat("Joining room {0} as ${1}", room, _config.RoomNick);
+                log.InfoFormat($"Joining room {room} as @{_config.RoomNick}");
             }
         }
 

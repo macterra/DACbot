@@ -113,7 +113,12 @@ namespace XmppBot.Plugins
             q.Remove(owner);
             q.Insert(0, user);
 
-            return $"{user} stole the DAC from {owner}! (swiper)";
+            if (q.Count > 1)
+            {
+                return $"{user} stole the DAC from @{owner} and jumped the line in front of @{q[1]}! srsly? (saddrive)";
+            }
+
+            return $"{user} stole the DAC from @{owner}! (swiper)";
         }
 
         private string DacStatus(string room)
