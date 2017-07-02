@@ -8,6 +8,13 @@ A customized version of [patHyatt](https://github.com/patHyatt/)'s [XmppBot-for-
 
 DACbot responds to the following commands:
 
+|command  |shortcut|result|
+|---------|--------|------|
+|!dibs    | !+     | Call dibs on the DAC|
+|!release | !-     | Release the DAC or rescind a dibs |
+|!steal   | !$     | Take the DAC from the current owner |
+|!status  | !?     | Get the DAC queue status |
+|!help    |        | Get DACbot commands |
 
 ## Installation
 
