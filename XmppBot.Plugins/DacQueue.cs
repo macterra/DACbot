@@ -11,7 +11,7 @@ namespace XmppBot.Plugins
     [Export(typeof(IXmppBotPlugin))]
     public class DacQueue : XmppBotPluginBase, IXmppBotPlugin
     {
-        private Dictionary<string, List<string>> _roomQueues = new Dictionary<string, List<string>>();
+        private readonly Dictionary<string, List<string>> _roomQueues = new Dictionary<string, List<string>>();
         private DateTime _acquireTime;
 
         public override string EvaluateEx(ParsedLine line)
@@ -20,15 +20,20 @@ namespace XmppBot.Plugins
 
             switch (line.Command.ToLower())
             {
+                case "dibs":
                 case "+":
                     return RequestDac(line.User.Mention, line.Room);
 
+                case "release":
+                case "cancel":
                 case "-":
                     return RescindDac(line.User.Mention, line.Room);
 
-                case "+!":
+                case "steal":
+                case "$":
                     return StealDac(line.User.Mention, line.Room);
 
+                case "status":
                 case "?":
                     return DacStatus(line.Room);
 
@@ -74,13 +79,18 @@ namespace XmppBot.Plugins
 
                 q.Remove(user);
 
-                if (hadDAC && q.Count > 0)
+                if (hadDAC)
                 {
-                    _acquireTime = DateTime.Now;
-                    return $"{user} rescinds the DAC... @{q[0]} the DAC is yours.";
+                    if (q.Count > 0)
+                    {
+                        _acquireTime = DateTime.Now;
+                        return $"{user} releases the DAC... @{q[0]} the DAC is yours. (gladdrive)";
+                    }
+
+                    return $"{user} releases the DAC. The DAC is currently free. (gladdrive)";
                 }
 
-                return $"{user} rescinds the DAC";
+                return $"{user} rescinds dibs on the DAC";
             }
 
             return $"{user} is not queued for the DAC";
@@ -125,10 +135,11 @@ namespace XmppBot.Plugins
         {
             var sb = new StringBuilder();
 
-            sb.AppendLine("I'm DACbot! I know the following commands:");
-            sb.AppendLine("!+ : call dibs on the DAC");
-            sb.AppendLine("!- : give up the DAC or rescind a dibs");
-            sb.AppendLine("!? : get the current queue status");
+            sb.AppendLine("DACbot at your service! I know the following commands:");
+            sb.AppendLine("!dibs (or !+) : call dibs on the DAC");
+            sb.AppendLine("!release (or !-) : give up the DAC or rescind a dibs");
+            sb.AppendLine("!steal (or !$) : take the DAC from the current owner");
+            sb.AppendLine("!status (or !?) : get the current queue status");
             sb.AppendLine("!help : this message");
 
             return sb.ToString();
