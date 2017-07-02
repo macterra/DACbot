@@ -37,11 +37,8 @@ namespace XmppBot.Plugins
                 case "?":
                     return DacStatus(line.Room);
 
-                case "help":
-                    return DacHelp();
-
                 default:
-                    return $"unknown command {line.Command}";
+                    return DacHelp();
             }
         }
 
@@ -84,10 +81,10 @@ namespace XmppBot.Plugins
                     if (q.Count > 0)
                     {
                         _acquireTime = DateTime.Now;
-                        return $"{user} releases the DAC... @{q[0]} the DAC is yours. (gladdrive)";
+                        return $"{user} releases the DAC... @{q[0]} the DAC is yours (gladdrive)";
                     }
 
-                    return $"{user} releases the DAC. The DAC is currently free. (gladdrive)";
+                    return $"{user} releases the DAC. The DAC is currently free (gladdrive)";
                 }
 
                 return $"{user} rescinds dibs on the DAC";
@@ -98,7 +95,25 @@ namespace XmppBot.Plugins
 
         private string StealDac(string user, string room)
         {
-            return $"{user} steals the DAC! in {room} (swiper)";
+            var q = GetQueue(room);
+
+            if (q.Count == 0)
+            {
+                return RequestDac(user, room);
+            }
+
+            var owner = q[0];
+
+            if (user == owner)
+            {
+                return $"{user} inexplicably attempts to steal the DAC from {user}";
+            }
+
+            q.Remove(user);
+            q.Remove(owner);
+            q.Insert(0, user);
+
+            return $"{user} stole the DAC from {owner}! (swiper)";
         }
 
         private string DacStatus(string room)
