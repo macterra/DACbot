@@ -8,11 +8,28 @@ using XmppBot.Common;
 
 namespace XmppBot.Plugins
 {
+    public class Dibs
+    {
+        public string User { get; }
+        public DateTime Time { get; private set; }
+        public TimeSpan Duration => DateTime.Now - Time;
+
+        public Dibs(string user)
+        {
+            User = user;
+            Time = DateTime.Now;
+        }
+
+        public void Reset()
+        {
+            Time = DateTime.Now;
+        }
+    }
+
     [Export(typeof(IXmppBotPlugin))]
     public class DacQueue : XmppBotPluginBase, IXmppBotPlugin
     {
-        private readonly Dictionary<string, List<string>> _roomQueues = new Dictionary<string, List<string>>();
-        private DateTime _acquireTime;
+        private readonly Dictionary<string, List<Dibs>> _roomQueues = new Dictionary<string, List<Dibs>>();
 
         public override string EvaluateEx(ParsedLine line)
         {
@@ -47,41 +64,42 @@ namespace XmppBot.Plugins
         private string RequestDac(string user, string room)
         {
             var q = GetQueue(room);
+            var dibs = q.Find(d => d.User == user);
 
-            if (q.Contains(user))
+            if (dibs != null)
             {
-                return q[0] == user 
+                return q[0].User == user 
                     ? $"{user} already has the DAC" 
                     : $"{user} is already queued for the DAC";
             }
             
-            q.Add(user);
+            q.Add(new Dibs(user));
 
             if (q.Count == 1)
             {
-                _acquireTime = DateTime.Now;
                 return $"{user} the DAC is yours!";
             }
 
-            return $"{user} calls (dibs) on the DAC after {q[q.Count-2]}";
+            return $"{user} calls (dibs) on the DAC after {q[q.Count-2].User}";
         }
 
         private string RescindDac(string user, string room)
         {
             var q = GetQueue(room);
+            var dibs = q.Find(d => d.User == user);
 
-            if (q.Contains(user))
+            if (dibs != null)
             {
-                bool hadDAC = q[0] == user;
+                bool hadDac = q[0].User == user;
 
-                q.Remove(user);
+                q.Remove(dibs);
 
-                if (hadDAC)
+                if (hadDac)
                 {
                     if (q.Count > 0)
                     {
-                        _acquireTime = DateTime.Now;
-                        return $"{user} releases the DAC... @{q[0]} the DAC is yours (gladdrive)";
+                        q[0].Reset();
+                        return $"{user} releases the DAC... @{q[0].User} the DAC is yours (gladdrive)";
                     }
 
                     return $"{user} releases the DAC. The DAC is currently free (gladdrive)";
@@ -104,21 +122,32 @@ namespace XmppBot.Plugins
 
             var owner = q[0];
 
-            if (user == owner)
+            if (user == owner.User)
             {
                 return $"{user} inexplicably attempts to steal the DAC from {user}";
             }
 
-            q.Remove(user);
             q.Remove(owner);
-            q.Insert(0, user);
+
+            var dibs = q.Find(d => d.User == user);
+
+            if (dibs != null)
+            {
+                q.Remove(dibs);
+                dibs.Reset();
+                q.Insert(0, dibs);
+            }
+            else
+            {
+                q.Insert(0, new Dibs(user));
+            }
 
             if (q.Count > 1)
             {
-                return $"{user} stole the DAC from @{owner} and jumped the line in front of @{q[1]}! srsly? (saddrive)";
+                return $"{user} stole the DAC from @{owner.User} and jumped the line in front of @{q[1].User}! srsly? (saddrive)";
             }
 
-            return $"{user} stole the DAC from @{owner}! (swiper)";
+            return $"{user} stole the DAC from @{owner.User}! (swiper)";
         }
 
         private string DacStatus(string room)
@@ -131,21 +160,22 @@ namespace XmppBot.Plugins
             }
 
             var sb = new StringBuilder();
-            var duration = DateTime.Now - _acquireTime;
+            var dibs = q[0];
+            var duration = dibs.Duration;
 
             if (duration > TimeSpan.FromMinutes(10))
             {
-                sb.Append($"{q[0]} has been hogging the DAC for {duration}");
+                sb.Append($"{dibs.User} has been hogging the DAC for {duration}");
             }
             else
             {
-                sb.Append($"{q[0]} has had the DAC for {duration}");
+                sb.Append($"{dibs.User} has had the DAC for {duration}");
             }
 
             for (int i = 1; i < q.Count; i++)
             {
                 sb.AppendLine();
-                sb.Append($"... followed by {q[i]}");
+                sb.Append($"... followed by {q[i].User}, waiting for {q[i].Duration}");
             }
 
             return sb.ToString();
@@ -165,11 +195,11 @@ namespace XmppBot.Plugins
             return sb.ToString();
         }
 
-        private List<string> GetQueue(string room)
+        private List<Dibs> GetQueue(string room)
         {
             if (!_roomQueues.ContainsKey(room))
             {
-                _roomQueues[room] = new List<string>();
+                _roomQueues[room] = new List<Dibs>();
             }
 
             return _roomQueues[room];
