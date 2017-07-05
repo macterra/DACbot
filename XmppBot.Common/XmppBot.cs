@@ -243,9 +243,8 @@ namespace XmppBot.Common
                 plugin.SentMessage += new PluginMessageHandler(SendMessage);
 
                 // wire up plugin init
-                plugin.Initialize();
+                plugin.Initialize(_config);
             }
-
 
             StringBuilder builder = new StringBuilder();
             builder.AppendLine("Loaded the following plugins");

@@ -22,6 +22,8 @@ namespace XmppBot.Common
 
         public string ConferenceServer { get; set; }
 
+        public string BatonName { get; set; }
+
         public static XmppBotConfig FromAppConfig()
         {
             var config = new XmppBotConfig();
@@ -33,6 +35,7 @@ namespace XmppBot.Common
             config.User = ConfigurationManager.AppSettings["User"];
             config.Resource = ConfigurationManager.AppSettings["Resource"];
             config.ConferenceServer = ConfigurationManager.AppSettings["ConferenceServer"];
+            config.BatonName = ConfigurationManager.AppSettings["BatonName"];
 
             return config;
         }

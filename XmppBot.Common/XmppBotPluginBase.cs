@@ -24,7 +24,7 @@ namespace XmppBot.Common
             this.Enabled = this.EnabledByDefault;
         }
 
-        public virtual void Initialize() { }
+        public virtual void Initialize(XmppBotConfig config) { }
 
         public virtual string Help(ParsedLine line)
         {

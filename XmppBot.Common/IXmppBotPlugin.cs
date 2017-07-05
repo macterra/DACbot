@@ -5,7 +5,7 @@ namespace XmppBot.Common
 {
     public interface IXmppBotPlugin
     {
-        void Initialize();
+        void Initialize(XmppBotConfig config);
 
         string Evaluate(ParsedLine line);
 
