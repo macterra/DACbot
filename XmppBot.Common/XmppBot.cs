@@ -78,7 +78,7 @@ namespace XmppBot.Common
             log.Info("Connecting...");
             _client.Resource = _config.Resource;
             _client.Open(_config.User, _config.Password);
-            log.Info("Connected.");
+            log.Info($"Connected as {_config.User} {_config.Resource}.");
 
             _client.OnRosterStart += new ObjectHandler(_client_OnRosterStart);
             _client.OnRosterItem += new XmppClientConnection.RosterHandler(_client_OnRosterItem);
@@ -95,7 +95,16 @@ namespace XmppBot.Common
             foreach (string room in rooms)
             {
                 Jid jid = new Jid(room + "@" + _config.ConferenceServer);
-                mucManager.JoinRoom(jid, _config.RoomNick);
+
+                try
+                {
+                    mucManager.JoinRoom(jid, _config.RoomNick);
+                }
+                catch (Exception e)
+                {
+                    log.ErrorFormat($"Error joining room {e}");
+                }
+
                 log.InfoFormat($"Joining room {room} as @{_config.RoomNick}");
             }
         }

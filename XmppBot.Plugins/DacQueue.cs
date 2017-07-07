@@ -31,10 +31,12 @@ namespace XmppBot.Plugins
     {
         private static readonly ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         private readonly Dictionary<string, List<Dibs>> _roomQueues = new Dictionary<string, List<Dibs>>();
+        private string _botName;
         private string _batonName;
 
         public override void Initialize(XmppBotConfig config)
         {
+            _botName = config.RoomNick;
             _batonName = config.BatonName;
         }
 
@@ -169,7 +171,7 @@ namespace XmppBot.Plugins
 
             if (q.Count == 0)
             {
-                return "The DAC queue is empty";
+                return $"The {_batonName} queue is empty";
             }
 
             var sb = new StringBuilder();
@@ -198,12 +200,12 @@ namespace XmppBot.Plugins
         {
             var sb = new StringBuilder();
 
-            sb.AppendLine("DACbot at your service! I know the following commands:");
-            sb.AppendLine("!dibs (or !+) : call dibs on the {_batonName}");
-            sb.AppendLine("!release (or !-) : give up the {_batonName} or rescind a dibs");
-            sb.AppendLine("!steal (or !$) : take the {_batonName} from the current owner");
-            sb.AppendLine("!status (or !?) : get the current queue status");
-            sb.AppendLine("!help : this message");
+            sb.AppendLine($"{_botName} at your service! I know the following commands:");
+            sb.AppendLine($"!dibs (or !+) : call dibs on the {_batonName}");
+            sb.AppendLine($"!release (or !-) : give up the {_batonName} or rescind a dibs");
+            sb.AppendLine($"!steal (or !$) : take the {_batonName} from the current owner");
+            sb.AppendLine($"!status (or !?) : get the current queue status");
+            sb.AppendLine($"!help : this message");
 
             return sb.ToString();
         }
