@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Text;
@@ -78,7 +79,7 @@ namespace XmppBot.Plugins
             if (dibs != null)
             {
                 return q[0].User == user 
-                    ? $"{user} already has the {_batonName}" 
+                    ? $"{user} already has the {_batonName} (pokerface)" 
                     : $"{user} is already queued for the {_batonName}";
             }
             
@@ -89,7 +90,7 @@ namespace XmppBot.Plugins
                 return $"{user} the {_batonName} is yours!";
             }
 
-            return $"{user} calls (dibs) on the {_batonName} after {q[q.Count-2].User}";
+            return $"{user} calls (dibs) on the {_batonName} after {q[q.Count-2].User}... fyi @{q[0].User}";
         }
 
         private string RescindDac(string user, string room)
@@ -139,7 +140,7 @@ namespace XmppBot.Plugins
 
             if (user == owner.User)
             {
-                return $"{user} inexplicably attempts to steal the {_batonName} from {user}";
+                return $"{user} inexplicably attempts to steal the {_batonName} from {user} (derp)";
             }
 
             q.Remove(owner);
@@ -157,12 +158,39 @@ namespace XmppBot.Plugins
                 q.Insert(0, new Dibs(user));
             }
 
+            var emoticon = RandomAngryEmoticon();
+
             if (q.Count > 1)
             {
-                return $"{user} stole the {_batonName} from @{owner.User} and jumped the line in front of @{q[1].User}! srsly? (saddrive)";
+                return $"{user} stole the {_batonName} from @{owner.User} and jumped the line in front of @{q[1].User}! srsly? {emoticon}";
             }
 
-            return $"{user} stole the {_batonName} from @{owner.User}! (swiper)";
+            return $"{user} stole the {_batonName} from @{owner.User}! {emoticon}";
+        }
+
+        private readonly string[] _angryEmoticons =
+        {
+            "(wat)",
+            "(wtf)",
+            "(orly)",
+            "(huh)",
+            "(lol)",
+            "(haha)",
+            "(rageguy)",
+            "(mindblown)",
+            "(swiper)",
+            "(sadpanda)",
+            "(grumpycat)",
+            "(iseewhatyoudidthere)",
+            "(cerealspit)",
+            "(badass)"
+        };
+
+        private string RandomAngryEmoticon()
+        {
+            var rng = new Random();
+            var idx = rng.Next(_angryEmoticons.Length - 1);
+            return _angryEmoticons[idx];
         }
 
         private string DacStatus(string room)
