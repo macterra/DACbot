@@ -1,12 +1,12 @@
-# DACbot
+# Qbot
 
 ## What is it
 
-A customized version of [patHyatt](https://github.com/patHyatt/)'s [XmppBot-for-HipChat](https://github.com/patHyatt/XmppBot-for-HipChat) that manages the queue for a scarce resource, in this case the DAC which is a controller for a neurosurgery robot.
+A customized version of [patHyatt](https://github.com/patHyatt/)'s [XmppBot-for-HipChat](https://github.com/patHyatt/XmppBot-for-HipChat) that manages the queue for a scarce resource.
 
 ## To use:
 
-DACbot responds to the following commands:
+Qbot responds to the following commands:
 
 |command  |shortcut|result|
 |---------|--------|------|
