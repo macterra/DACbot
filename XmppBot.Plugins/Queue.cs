@@ -41,9 +41,29 @@ namespace XmppBot.Plugins
             _batonName = config.BatonName;
         }
 
+        private bool Mentions(string line)
+        {
+            return line.IndexOf(_botName, StringComparison.Ordinal) >= 0;
+        }
+
+        private string RespondToMention(ParsedLine line)
+        {
+            if (line.Raw.StartsWith("/me"))
+            {
+                return line.Raw.Replace(_botName, line.User.Mention);
+            }
+
+            return $"Hi @{line.User.Mention}";
+        }
+
         public override string EvaluateEx(ParsedLine line)
         {
             // log.Debug($"Queue EvaluateEx {line.Raw}");
+
+            if (Mentions(line.Raw))
+            {
+                return RespondToMention(line);
+            }
             
             if (!line.IsCommand) return string.Empty;
 
@@ -51,29 +71,29 @@ namespace XmppBot.Plugins
             {
                 case "dibs":
                 case "+":
-                    return RequestDac(line.User.Mention, line.Room);
+                    return RequestBaton(line.User.Mention, line.Room);
 
                 case "release":
                 case "cancel":
                 case "-":
-                    return RescindDac(line.User.Mention, line.Room);
+                    return RescindBaton(line.User.Mention, line.Room);
 
                 case "steal":
                 case "$":
-                    return StealDac(line.User.Mention, line.Room);
+                    return StealBaton(line.User.Mention, line.Room);
 
                 case "status":
                 case "?":
-                    return DacStatus(line.Room);
+                    return QueueStatus(line.Room);
 
                 default:
-                    return DacHelp();
+                    return BatonHelp();
             }
         }
 
-        public override string Name => "DAC queue";
+        public override string Name => "Queue";
 
-        private string RequestDac(string user, string room)
+        private string RequestBaton(string user, string room)
         {
             var q = GetQueue(room);
             var dibs = q.Find(d => d.User == user);
@@ -95,18 +115,18 @@ namespace XmppBot.Plugins
             return $"{user} calls (dibs) on the {_batonName} after {q[q.Count-2].User}... fyi @{q[0].User}";
         }
 
-        private string RescindDac(string user, string room)
+        private string RescindBaton(string user, string room)
         {
             var q = GetQueue(room);
             var dibs = q.Find(d => d.User == user);
 
             if (dibs != null)
             {
-                bool hadDac = q[0].User == user;
+                bool hadBaton = q[0].User == user;
 
                 q.Remove(dibs);
 
-                if (hadDac)
+                if (hadBaton)
                 {
                     if (q.Count > 0)
                     {
@@ -129,13 +149,13 @@ namespace XmppBot.Plugins
             return $"{user} is not queued for the {_batonName}";
         }
 
-        private string StealDac(string user, string room)
+        private string StealBaton(string user, string room)
         {
             var q = GetQueue(room);
 
             if (q.Count == 0)
             {
-                return RequestDac(user, room);
+                return RequestBaton(user, room);
             }
 
             var owner = q[0];
@@ -195,7 +215,7 @@ namespace XmppBot.Plugins
             return _angryEmoticons[idx];
         }
 
-        private string DacStatus(string room)
+        private string QueueStatus(string room)
         {
             var q = GetQueue(room);
 
@@ -226,7 +246,7 @@ namespace XmppBot.Plugins
             return sb.ToString();
         }
 
-        private string DacHelp()
+        private string BatonHelp()
         {
             var sb = new StringBuilder();
 
