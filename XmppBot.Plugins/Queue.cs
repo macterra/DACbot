@@ -78,6 +78,10 @@ namespace XmppBot.Plugins
                 case "-":
                     return RescindBaton(line.User.Mention, line.Room);
 
+                case "redibs":
+                case "-+":
+                    return RejoinQueue(line.User.Mention, line.Room);
+
                 case "steal":
                 case "$":
                     return StealBaton(line.User.Mention, line.Room);
@@ -87,7 +91,7 @@ namespace XmppBot.Plugins
                     return QueueStatus(line.Room);
 
                 default:
-                    return BatonHelp();
+                    return QueueHelp();
             }
         }
 
@@ -147,6 +151,29 @@ namespace XmppBot.Plugins
             }
 
             return $"{user} is not queued for the {_batonName}";
+        }
+
+        private string RejoinQueue(string user, string room)
+        {
+            var q = GetQueue(room);
+            var dibs = q.Find(d => d.User == user);
+
+            if (dibs != null)
+            {
+                if (q.Count > 1)
+                {
+                    var sb = new StringBuilder();
+
+                    sb.AppendLine(RescindBaton(user, room));
+                    sb.AppendLine(RequestBaton(user, room));
+
+                    return sb.ToString();
+                }
+
+                return $"{user} is giving up the {_batonName} for {user} (pokerface)";
+            }
+
+            return RequestBaton(user, room);
         }
 
         private string StealBaton(string user, string room)
@@ -246,13 +273,14 @@ namespace XmppBot.Plugins
             return sb.ToString();
         }
 
-        private string BatonHelp()
+        private string QueueHelp()
         {
             var sb = new StringBuilder();
 
             sb.AppendLine($"{_botName} at your service! I know the following commands:");
             sb.AppendLine($"!dibs (or !+) : call dibs on the {_batonName}");
             sb.AppendLine($"!release (or !-) : give up the {_batonName} or rescind a dibs");
+            sb.AppendLine($"!redibs (or !-+) : combined release and dibs as a courtesy");
             sb.AppendLine($"!steal (or !$) : take the {_batonName} from the current owner");
             sb.AppendLine($"!status (or !?) : get the current queue status");
             sb.AppendLine($"!help : this message");
