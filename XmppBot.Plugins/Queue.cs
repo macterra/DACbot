@@ -32,8 +32,44 @@ namespace XmppBot.Plugins
     {
         private static readonly ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         private readonly Dictionary<string, List<Dibs>> _roomQueues = new Dictionary<string, List<Dibs>>();
+        private readonly Dictionary<string, bool> _roomLocks = new Dictionary<string, bool>();
         private string _botName;
         private string _batonName;
+
+        private readonly string[] _angryEmoticons =
+        {
+            "(wat)",
+            "(wtf)",
+            "(orly)",
+            "(huh)",
+            "(lol)",
+            "(haha)",
+            "(rageguy)",
+            "(mindblown)",
+            "(swiper)",
+            "(sadpanda)",
+            "(grumpycat)",
+            "(iseewhatyoudidthere)",
+            "(cerealspit)",
+            "(areyoukiddingme)",
+            "(jackie)",
+            "(tableflip)",
+            "(badass)"
+        };
+
+        private readonly string[] _happyEmoticons =
+        {
+            "(allthethings)",
+            "(awthanks)",
+            "(awwyiss)",
+            "(content)",
+            "(freddie)",
+            "(fonzie)",
+            "(goodnews)",
+            "(yey)",
+            "(poolparty)",
+            "(bow)",
+        };
 
         public override void Initialize(XmppBotConfig config)
         {
@@ -90,6 +126,14 @@ namespace XmppBot.Plugins
                 case "?":
                     return QueueStatus(line.Room);
 
+                case "lock":
+                case "@+":
+                    return LockQueue(line.User.Mention, line.Room);
+
+                case "unlock":
+                case "@-":
+                    return UnlockQueue(line.User.Mention, line.Room);
+
                 default:
                     return QueueHelp();
             }
@@ -99,6 +143,13 @@ namespace XmppBot.Plugins
 
         private string RequestBaton(string user, string room)
         {
+            var locked = GetLock(room);
+
+            if (locked)
+            {
+                return QueueStatus(room);
+            }
+
             var q = GetQueue(room);
             var dibs = q.Find(d => d.User == user);
 
@@ -113,7 +164,8 @@ namespace XmppBot.Plugins
 
             if (q.Count == 1)
             {
-                return $"{user} the {_batonName} is yours!";
+                var emoticon = RandomHappyEmoticon();
+                return $"{user} the {_batonName} is yours! {emoticon}";
             }
 
             return $"{user} calls (dibs) on the {_batonName} after {q[q.Count-2].User}... fyi @{q[0].User}";
@@ -121,6 +173,13 @@ namespace XmppBot.Plugins
 
         private string RescindBaton(string user, string room)
         {
+            var locked = GetLock(room);
+
+            if (locked)
+            {
+                return QueueStatus(room);
+            }
+
             var q = GetQueue(room);
             var dibs = q.Find(d => d.User == user);
 
@@ -137,9 +196,10 @@ namespace XmppBot.Plugins
                         q[0].Reset();
 
                         var sb = new StringBuilder();
+                        var emoticon = RandomHappyEmoticon();
 
                         sb.AppendLine($"{user} releases the {_batonName} after {dibs.Duration}.");
-                        sb.AppendLine($"@{q[0].User} the {_batonName} is yours! (gladdrive)");
+                        sb.AppendLine($"@{q[0].User} the {_batonName} is yours! {emoticon}");
 
                         return sb.ToString();
                     }
@@ -155,6 +215,13 @@ namespace XmppBot.Plugins
 
         private string RejoinQueue(string user, string room)
         {
+            var locked = GetLock(room);
+
+            if (locked)
+            {
+                return QueueStatus(room);
+            }
+
             var q = GetQueue(room);
             var dibs = q.Find(d => d.User == user);
 
@@ -178,6 +245,13 @@ namespace XmppBot.Plugins
 
         private string StealBaton(string user, string room)
         {
+            var locked = GetLock(room);
+
+            if (locked)
+            {
+                return QueueStatus(room);
+            }
+
             var q = GetQueue(room);
 
             if (q.Count == 0)
@@ -217,38 +291,56 @@ namespace XmppBot.Plugins
             return $"{user} stole the {_batonName} from @{owner.User}! {emoticon}";
         }
 
-        private readonly string[] _angryEmoticons =
+        private string LockQueue(string user, string room)
         {
-            "(wat)",
-            "(wtf)",
-            "(orly)",
-            "(huh)",
-            "(lol)",
-            "(haha)",
-            "(rageguy)",
-            "(mindblown)",
-            "(swiper)",
-            "(sadpanda)",
-            "(grumpycat)",
-            "(iseewhatyoudidthere)",
-            "(cerealspit)",
-            "(badass)"
-        };
+            var locked = GetLock(room);
 
-        private string RandomAngryEmoticon()
+            if (locked)
+            {
+                return QueueStatus(room);
+            }
+
+            var q = GetQueue(room);
+            
+            q.Clear();
+            RequestBaton(user, room);
+            SetLock(room, true);
+
+            var emoticon = RandomAngryEmoticon();
+            return $"@all {user} has locked {_batonName}! {emoticon}";
+        }
+
+        private string UnlockQueue(string user, string room)
         {
-            var rng = new Random();
-            var idx = rng.Next(_angryEmoticons.Length - 1);
-            return _angryEmoticons[idx];
+            var locked = GetLock(room);
+            var q = GetQueue(room);
+
+            if (locked)
+            {
+                q.Clear();
+                SetLock(room, false);
+
+                var emoticon = RandomHappyEmoticon();
+                return $"@all {user} has unlocked the {_batonName}! {emoticon}";
+            }
+
+            return $"{_batonName} is not locked. (pokerface)";
         }
 
         private string QueueStatus(string room)
         {
             var q = GetQueue(room);
+            var locked = GetLock(room);
 
             if (q.Count == 0)
             {
                 return $"The {_batonName} queue is empty";
+            }
+
+            if (locked)
+            {
+                var owner = q[0];
+                return $"{owner.User} has had the {_batonName} locked for {owner.Duration}";
             }
 
             var sb = new StringBuilder();
@@ -282,6 +374,8 @@ namespace XmppBot.Plugins
             sb.AppendLine($"!release (or !-) : give up the {_batonName} or rescind a dibs");
             sb.AppendLine($"!redibs (or !-+) : combined release and dibs as a courtesy");
             sb.AppendLine($"!steal (or !$) : take the {_batonName} from the current owner");
+            sb.AppendLine($"!lock (or !@+) : lock the {_batonName} preventing anyone else from calling dibs");
+            sb.AppendLine($"!unlock (or !@-) : unlock the {_batonName}");
             sb.AppendLine($"!status (or !?) : get the current queue status");
             sb.AppendLine($"!help : this message");
 
@@ -296,6 +390,38 @@ namespace XmppBot.Plugins
             }
 
             return _roomQueues[room];
+        }
+
+        private bool GetLock(string room)
+        {
+            if (!_roomLocks.ContainsKey(room))
+            {
+                _roomLocks[room] = false;
+            }
+
+            return _roomLocks[room];
+        }
+
+        private void SetLock(string room, bool isLocked)
+        {
+            _roomLocks[room] = isLocked;
+        }
+
+        private string RandomEmoticon(string[] emoticons)
+        {
+            var rng = new Random();
+            var idx = rng.Next(emoticons.Length - 1);
+            return emoticons[idx];
+        }
+
+        private string RandomAngryEmoticon()
+        {
+            return RandomEmoticon(_angryEmoticons);
+        }
+
+        private string RandomHappyEmoticon()
+        {
+            return RandomEmoticon(_happyEmoticons);
         }
     }
 }
