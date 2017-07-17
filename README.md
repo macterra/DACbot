@@ -12,7 +12,10 @@ Qbot responds to the following commands:
 |---------|--------|------|
 |!dibs    | !+     | Call dibs on the {baton}|
 |!release | !-     | Release the {baton} or rescind a dibs |
+|!redibs  | !-+    | Release and dibs combined as a courtesy |
 |!steal   | !$     | Take the {baton} from the current owner |
+|!lock    | !@+    | Lock the {baton} so no one else can call dibs |
+|!unlock  | !@-    | Unlock the {baton} |
 |!status  | !?     | Get the {baton} queue status |
 |!help    |        | Get Qbot commands |
 
