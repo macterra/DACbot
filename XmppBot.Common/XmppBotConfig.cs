@@ -24,6 +24,10 @@ namespace XmppBot.Common
 
         public string BatonName { get; set; }
 
+        public string PositiveEmoticons { get; set; }
+
+        public string NegativeEmoticons { get; set; }
+
         public static XmppBotConfig FromAppConfig()
         {
             var config = new XmppBotConfig();
@@ -36,6 +40,8 @@ namespace XmppBot.Common
             config.Resource = ConfigurationManager.AppSettings["Resource"];
             config.ConferenceServer = ConfigurationManager.AppSettings["ConferenceServer"];
             config.BatonName = ConfigurationManager.AppSettings["BatonName"];
+            config.PositiveEmoticons = ConfigurationManager.AppSettings["PositiveEmoticons"];
+            config.NegativeEmoticons = ConfigurationManager.AppSettings["NegativeEmoticons"];
 
             return config;
         }

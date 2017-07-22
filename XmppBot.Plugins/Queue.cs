@@ -75,6 +75,14 @@ namespace XmppBot.Plugins
         {
             _botName = config.RoomNick;
             _batonName = config.BatonName;
+
+            var positiveEmoticons = config.PositiveEmoticons;
+            var negativeEmoticons = config.NegativeEmoticons;
+
+            log.Debug($"My name is {_botName}");
+            log.Debug($"I manage the queue for the {_batonName}");
+            log.Debug($"Positive {positiveEmoticons}");
+            log.Debug($"Negative {negativeEmoticons}");
         }
 
         private bool Mentions(string line)
