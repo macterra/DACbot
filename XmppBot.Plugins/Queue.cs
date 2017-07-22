@@ -81,24 +81,42 @@ namespace XmppBot.Plugins
             
             if (!line.IsCommand) return string.Empty;
 
+            var args = String.Join(",", line.Args);
+
+            log.Debug($"Queue EvaluateEx Command={line.Command} Args={args}");
+
+            var user = line.User.Mention;
+
+            if (line.Args.Length == 1)
+            {
+                var other = line.Args[0];
+
+                if (other[0] == '@')
+                {
+                    user = other.Substring(1);
+                }
+            }
+
+            log.Debug($"User = {user}");
+
             switch (line.Command.ToLower())
             {
                 case "dibs":
                 case "+":
-                    return RequestBaton(line.User.Mention, line.Room);
+                    return RequestBaton(user, line.Room);
 
                 case "release":
                 case "cancel":
                 case "-":
-                    return RescindBaton(line.User.Mention, line.Room);
+                    return RescindBaton(user, line.Room);
 
                 case "redibs":
                 case "-+":
-                    return RejoinQueue(line.User.Mention, line.Room);
+                    return RejoinQueue(user, line.Room);
 
                 case "steal":
                 case "$":
-                    return StealBaton(line.User.Mention, line.Room);
+                    return StealBaton(user, line.Room);
 
                 case "status":
                 case "?":
@@ -106,11 +124,11 @@ namespace XmppBot.Plugins
 
                 case "lock":
                 case "@+":
-                    return LockQueue(line.User.Mention, line.Room);
+                    return LockQueue(user, line.Room);
 
                 case "unlock":
                 case "@-":
-                    return UnlockQueue(line.User.Mention, line.Room);
+                    return UnlockQueue(user, line.Room);
 
                 default:
                     return QueueHelp();
