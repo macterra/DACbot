@@ -35,41 +35,8 @@ namespace XmppBot.Plugins
         private readonly Dictionary<string, bool> _roomLocks = new Dictionary<string, bool>();
         private string _botName;
         private string _batonName;
-
-        private readonly string[] _angryEmoticons =
-        {
-            "(wat)",
-            "(wtf)",
-            "(orly)",
-            "(huh)",
-            "(lol)",
-            "(haha)",
-            "(rageguy)",
-            "(mindblown)",
-            "(swiper)",
-            "(sadpanda)",
-            "(grumpycat)",
-            "(iseewhatyoudidthere)",
-            "(cerealspit)",
-            "(areyoukiddingme)",
-            "(jackie)",
-            "(tableflip)",
-            "(badass)"
-        };
-
-        private readonly string[] _happyEmoticons =
-        {
-            "(allthethings)",
-            "(awthanks)",
-            "(awwyiss)",
-            "(content)",
-            "(freddie)",
-            "(fonzie)",
-            "(goodnews)",
-            "(yey)",
-            "(poolparty)",
-            "(bow)",
-        };
+        private string[] _positiveEmoticons;
+        private string[] _negativeEmoticons;
 
         public override void Initialize(XmppBotConfig config)
         {
@@ -79,10 +46,13 @@ namespace XmppBot.Plugins
             var positiveEmoticons = config.PositiveEmoticons;
             var negativeEmoticons = config.NegativeEmoticons;
 
+            _positiveEmoticons = positiveEmoticons.Split(',');
+            _negativeEmoticons = negativeEmoticons.Split(',');
+
             log.Debug($"My name is {_botName}");
             log.Debug($"I manage the queue for the {_batonName}");
-            log.Debug($"Positive {positiveEmoticons}");
-            log.Debug($"Negative {negativeEmoticons}");
+            log.Debug($"Positive emoticons: {positiveEmoticons}");
+            log.Debug($"Negative emoticons: {negativeEmoticons}");
         }
 
         private bool Mentions(string line)
@@ -172,7 +142,7 @@ namespace XmppBot.Plugins
 
             if (q.Count == 1)
             {
-                var emoticon = RandomHappyEmoticon();
+                var emoticon = RandomPositiveEmoticon();
                 return $"{user} the {_batonName} is yours! {emoticon}";
             }
 
@@ -204,7 +174,7 @@ namespace XmppBot.Plugins
                         q[0].Reset();
 
                         var sb = new StringBuilder();
-                        var emoticon = RandomHappyEmoticon();
+                        var emoticon = RandomPositiveEmoticon();
 
                         sb.AppendLine($"{user} releases the {_batonName} after {dibs.Duration}.");
                         sb.AppendLine($"@{q[0].User} the {_batonName} is yours! {emoticon}");
@@ -289,7 +259,7 @@ namespace XmppBot.Plugins
                 q.Insert(0, new Dibs(user));
             }
 
-            var emoticon = RandomAngryEmoticon();
+            var emoticon = RandomNegativeEmoticon();
 
             if (q.Count > 1)
             {
@@ -314,7 +284,7 @@ namespace XmppBot.Plugins
             RequestBaton(user, room);
             SetLock(room, true);
 
-            var emoticon = RandomAngryEmoticon();
+            var emoticon = RandomNegativeEmoticon();
             return $"@all {user} has locked {_batonName}! {emoticon}";
         }
 
@@ -328,7 +298,7 @@ namespace XmppBot.Plugins
                 q.Clear();
                 SetLock(room, false);
 
-                var emoticon = RandomHappyEmoticon();
+                var emoticon = RandomPositiveEmoticon();
                 return $"@all {user} has unlocked the {_batonName}! {emoticon}";
             }
 
@@ -419,17 +389,17 @@ namespace XmppBot.Plugins
         {
             var rng = new Random();
             var idx = rng.Next(emoticons.Length - 1);
-            return emoticons[idx];
+            return $"({emoticons[idx]})";
         }
 
-        private string RandomAngryEmoticon()
+        private string RandomNegativeEmoticon()
         {
-            return RandomEmoticon(_angryEmoticons);
+            return RandomEmoticon(_negativeEmoticons);
         }
 
-        private string RandomHappyEmoticon()
+        private string RandomPositiveEmoticon()
         {
-            return RandomEmoticon(_happyEmoticons);
+            return RandomEmoticon(_positiveEmoticons);
         }
     }
 }
