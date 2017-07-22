@@ -103,32 +103,32 @@ namespace XmppBot.Plugins
             {
                 case "dibs":
                 case "+":
-                    return RequestBaton(user, line.Room);
+                    return RequestBaton(user, line);
 
                 case "release":
                 case "cancel":
                 case "-":
-                    return RescindBaton(user, line.Room);
+                    return RescindBaton(user, line);
 
                 case "redibs":
                 case "-+":
-                    return RejoinQueue(user, line.Room);
+                    return RejoinQueue(user, line);
 
                 case "steal":
                 case "$":
-                    return StealBaton(user, line.Room);
+                    return StealBaton(user, line);
 
                 case "status":
                 case "?":
-                    return QueueStatus(line.Room);
+                    return QueueStatus(line);
 
                 case "lock":
                 case "@+":
-                    return LockQueue(user, line.Room);
+                    return LockQueue(user, line);
 
                 case "unlock":
                 case "@-":
-                    return UnlockQueue(user, line.Room);
+                    return UnlockQueue(user, line);
 
                 default:
                     return QueueHelp();
@@ -137,13 +137,16 @@ namespace XmppBot.Plugins
 
         public override string Name => "Queue";
 
-        private string RequestBaton(string user, string room)
+        private string RequestBaton(string user, ParsedLine line)
         {
+            var proxy = line.User.Mention;
+            var room = line.Room;
+
             var locked = GetLock(room);
 
             if (locked)
             {
-                return QueueStatus(room);
+                return QueueStatus(line);
             }
 
             var q = GetQueue(room);
@@ -167,13 +170,15 @@ namespace XmppBot.Plugins
             return $"{user} calls (dibs) on the {_batonName} after {q[q.Count-2].User}... fyi @{q[0].User}";
         }
 
-        private string RescindBaton(string user, string room)
+        private string RescindBaton(string user, ParsedLine line)
         {
+            var proxy = line.User.Mention;
+            var room = line.Room;
             var locked = GetLock(room);
 
             if (locked)
             {
-                return QueueStatus(room);
+                return QueueStatus(line);
             }
 
             var q = GetQueue(room);
@@ -209,13 +214,15 @@ namespace XmppBot.Plugins
             return $"{user} is not queued for the {_batonName}";
         }
 
-        private string RejoinQueue(string user, string room)
+        private string RejoinQueue(string user, ParsedLine line)
         {
+            var proxy = line.User.Mention;
+            var room = line.Room;
             var locked = GetLock(room);
 
             if (locked)
             {
-                return QueueStatus(room);
+                return QueueStatus(line);
             }
 
             var q = GetQueue(room);
@@ -227,8 +234,8 @@ namespace XmppBot.Plugins
                 {
                     var sb = new StringBuilder();
 
-                    sb.AppendLine(RescindBaton(user, room));
-                    sb.AppendLine(RequestBaton(user, room));
+                    sb.AppendLine(RescindBaton(user, line));
+                    sb.AppendLine(RequestBaton(user, line));
 
                     return sb.ToString();
                 }
@@ -236,23 +243,25 @@ namespace XmppBot.Plugins
                 return $"{user} is giving up the {_batonName} for {user} (pokerface)";
             }
 
-            return RequestBaton(user, room);
+            return RequestBaton(user, line);
         }
 
-        private string StealBaton(string user, string room)
+        private string StealBaton(string user, ParsedLine line)
         {
+            var proxy = line.User.Mention;
+            var room = line.Room;
             var locked = GetLock(room);
 
             if (locked)
             {
-                return QueueStatus(room);
+                return QueueStatus(line);
             }
 
             var q = GetQueue(room);
 
             if (q.Count == 0)
             {
-                return RequestBaton(user, room);
+                return RequestBaton(user, line);
             }
 
             var owner = q[0];
@@ -287,27 +296,31 @@ namespace XmppBot.Plugins
             return $"{user} stole the {_batonName} from @{owner.User}! {emoticon}";
         }
 
-        private string LockQueue(string user, string room)
+        private string LockQueue(string user, ParsedLine line)
         {
+            var proxy = line.User.Mention;
+            var room = line.Room;
             var locked = GetLock(room);
 
             if (locked)
             {
-                return QueueStatus(room);
+                return QueueStatus(line);
             }
 
             var q = GetQueue(room);
             
             q.Clear();
-            RequestBaton(user, room);
+            RequestBaton(user, line);
             SetLock(room, true);
 
             var emoticon = RandomNegativeEmoticon();
             return $"@all {user} has locked {_batonName}! {emoticon}";
         }
 
-        private string UnlockQueue(string user, string room)
+        private string UnlockQueue(string user, ParsedLine line)
         {
+            var proxy = line.User.Mention;
+            var room = line.Room;
             var locked = GetLock(room);
             var q = GetQueue(room);
 
@@ -323,8 +336,10 @@ namespace XmppBot.Plugins
             return $"{_batonName} is not locked. (pokerface)";
         }
 
-        private string QueueStatus(string room)
+        private string QueueStatus(ParsedLine line)
         {
+            var proxy = line.User.Mention;
+            var room = line.Room;
             var q = GetQueue(room);
             var locked = GetLock(room);
 
