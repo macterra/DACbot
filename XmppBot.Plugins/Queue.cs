@@ -163,10 +163,14 @@ namespace XmppBot.Plugins
             if (q.Count == 1)
             {
                 var emoticon = RandomPositiveEmoticon();
-                return $"{user} the {_batonName} is yours! {emoticon}";
+                return proxy == null
+                    ? $"{user} the {_batonName} is yours! {emoticon}"
+                    : $"{proxy} hands the {_batonName} to @{user}! {emoticon}";
             }
 
-            return $"{user} calls (dibs) on the {_batonName} after {q[q.Count-2].User}... fyi @{q[0].User}";
+            return proxy == null
+                ? $"{user} calls (dibs) on the {_batonName} after {q[q.Count - 2].User}... fyi @{q[0].User}"
+                : $"{proxy} calls (dibs) on the {_batonName} for @{user} after {q[q.Count-2].User}... fyi @{q[0].User}";
         }
 
         private string RescindBaton(string proxy, string user, string room)
@@ -196,16 +200,23 @@ namespace XmppBot.Plugins
                         var sb = new StringBuilder();
                         var emoticon = RandomPositiveEmoticon();
 
-                        sb.AppendLine($"{user} releases the {_batonName} after {dibs.Duration}.");
+                        sb.AppendLine(proxy == null
+                            ? $"{user} releases the {_batonName} after {dibs.Duration}."
+                            : $"{proxy} releases the {_batonName} for @{user} after {dibs.Duration}.");
+
                         sb.AppendLine($"@{q[0].User} the {_batonName} is yours! {emoticon}");
 
                         return sb.ToString();
                     }
 
-                    return $"{user} releases the {_batonName} after {dibs.Duration}.";
+                    return proxy == null
+                        ? $"{user} releases the {_batonName} after {dibs.Duration}."
+                        : $"{proxy} releases the {_batonName} for @{user} after {dibs.Duration}.";
                 }
 
-                return $"{user} rescinds dibs on the {_batonName}";
+                return proxy == null
+                    ? $"{user} rescinds dibs on the {_batonName}"
+                    : $"{proxy} rescinds dibs for @{user} on the {_batonName}";
             }
 
             return $"{user} is not queued for the {_batonName}";
@@ -261,7 +272,9 @@ namespace XmppBot.Plugins
 
             if (user == owner.User)
             {
-                return $"{user} inexplicably attempts to steal the {_batonName} from {user} (derp)";
+                return proxy == null
+                    ? $"{user} inexplicably attempts to steal the {_batonName} from {user} (derp)"
+                    : $"{proxy} inexplicably attempts to steal the {_batonName} from {user} for {user} (derp)";
             }
 
             q.Remove(owner);
@@ -283,10 +296,14 @@ namespace XmppBot.Plugins
 
             if (q.Count > 1)
             {
-                return $"{user} stole the {_batonName} from @{owner.User} and jumped the line in front of @{q[1].User}! srsly? {emoticon}";
+                return proxy == null
+                    ? $"{user} stole the {_batonName} from @{owner.User} and jumped the line in front of @{q[1].User}! srsly? {emoticon}"
+                    : $"{proxy} stole the {_batonName} from @{owner.User} for @{user} ahead of @{q[1].User}! srsly? {emoticon}";
             }
 
-            return $"{user} stole the {_batonName} from @{owner.User}! {emoticon}";
+            return proxy == null 
+                ? $"{user} stole the {_batonName} from @{owner.User}! {emoticon}"
+                : $"{proxy} stole the {_batonName} from @{owner.User} for @{user}! {emoticon}";
         }
 
         private string LockQueue(string proxy, string user, string room)
@@ -305,7 +322,9 @@ namespace XmppBot.Plugins
             SetLock(room, true);
 
             var emoticon = RandomNegativeEmoticon();
-            return $"@all {user} has locked {_batonName}! {emoticon}";
+            return proxy == null
+                ? $"@all {user} has locked the {_batonName}! {emoticon}"
+                : $"@all {proxy} has locked the {_batonName} for @{user}! {emoticon}";
         }
 
         private string UnlockQueue(string proxy, string user, string room)
@@ -319,7 +338,10 @@ namespace XmppBot.Plugins
                 SetLock(room, false);
 
                 var emoticon = RandomPositiveEmoticon();
-                return $"@all {user} has unlocked the {_batonName}! {emoticon}";
+
+                return proxy == null
+                    ? $"@all {user} has unlocked the {_batonName}! {emoticon}"
+                    : $"@all {proxy} has unlocked the {_batonName}! {emoticon}";
             }
 
             return $"{_batonName} is not locked. (pokerface)";
@@ -369,10 +391,14 @@ namespace XmppBot.Plugins
 
             sb.AppendLine($"{_botName} at your service! I know the following commands:");
             sb.AppendLine($"!dibs (or !+) : call dibs on the {_batonName}");
+            sb.AppendLine($"!dibs @mention: call dibs for @mention");
             sb.AppendLine($"!release (or !-) : give up the {_batonName} or rescind a dibs");
+            sb.AppendLine($"!release @mention: rescind a dibs for @mention");
             sb.AppendLine($"!redibs (or !-+) : combined release and dibs as a courtesy");
             sb.AppendLine($"!steal (or !$) : take the {_batonName} from the current owner");
+            sb.AppendLine($"!steal @mention: steal the {_batonName} for @mention");
             sb.AppendLine($"!lock (or !@+) : lock the {_batonName} preventing anyone else from calling dibs");
+            sb.AppendLine($"!lock @mention: lock the {_batonName} for @mention");
             sb.AppendLine($"!unlock (or !@-) : unlock the {_batonName}");
             sb.AppendLine($"!status (or !?) : get the current queue status");
             sb.AppendLine($"!help : this message");
