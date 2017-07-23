@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using log4net;
 using XmppBot.Common;
 
@@ -14,6 +16,7 @@ namespace XmppBot.Plugins
         public string User { get; }
         public DateTime Time { get; private set; }
         public TimeSpan Duration => DateTime.Now - Time;
+        public bool Pending { get; set; }
 
         public Dibs(string user)
         {
@@ -153,9 +156,18 @@ namespace XmppBot.Plugins
 
             if (dibs != null)
             {
-                return q[0].User == user 
-                    ? $"{user} already has the {_batonName} (pokerface)" 
-                    : $"{user} is already queued for the {_batonName}";
+                if (q[0].User == user)
+                {
+                    if (dibs.Pending)
+                    {
+                        dibs.Pending = false;
+                        return $"{user} claims the {_batonName}";
+                    }
+
+                    return $"{user} already has the {_batonName} (pokerface)";
+                }
+
+                return $"{user} is already queued for the {_batonName}";
             }
             
             q.Add(new Dibs(user));
@@ -204,7 +216,15 @@ namespace XmppBot.Plugins
                             ? $"{user} releases the {_batonName} after {dibs.Duration}."
                             : $"{proxy} releases the {_batonName} for @{user} after {dibs.Duration}.");
 
-                        sb.AppendLine($"@{q[0].User} the {_batonName} is yours! {emoticon}");
+                        if (q.Count > 1)
+                        { 
+                            sb.AppendLine($"@{q[0].User} the {_batonName} is yours if you call dibs again within 60 seconds! {emoticon}");
+                            CheckForPending(room);
+                        }
+                        else
+                        {
+                            sb.AppendLine($"@{q[0].User} the {_batonName} is yours! {emoticon}");
+                        }
 
                         return sb.ToString();
                     }
@@ -220,6 +240,36 @@ namespace XmppBot.Plugins
             }
 
             return $"{user} is not queued for the {_batonName}";
+        }
+
+        private void CheckForPending(string room)
+        {
+            Timer timer = null;
+            var q = GetQueue(room);
+            var dibs = q[0];
+
+            dibs.Pending = true;
+
+            timer = new Timer((obj) =>
+            {
+                //log.Debug($"CheckForPending {dibs.Pending} on {dibs.User} after {dibs.Duration} in {room}");
+
+                if (dibs.Pending)
+                {
+                    if (q.Count > 1)
+                    {
+                        q.Add(dibs);
+                        var msg = RescindBaton(null, dibs.User, room);
+                        SendMessage(msg, room, BotMessageType.groupchat);
+                    }
+                    else
+                    {
+                        SendMessage($"@{dibs.User} the {_batonName} is yours!", room, BotMessageType.groupchat);
+                    }
+                }
+
+                timer.Dispose();
+            }, null, 60000, Timeout.Infinite);
         }
 
         private string RejoinQueue(string proxy, string user, string room)

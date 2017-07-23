@@ -113,7 +113,7 @@ namespace XmppBot.Common
         {
             if (!string.IsNullOrEmpty(msg.Body))
             {
-                log.InfoFormat("Message : {0} - from {1}", msg.Body, msg.From);
+                log.InfoFormat("Message : {0} - from {1} type={2}", msg.Body, msg.From, msg.Type);
 
                 IChatUser user = null;
 
