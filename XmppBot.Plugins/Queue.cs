@@ -481,21 +481,27 @@ namespace XmppBot.Plugins
             _roomLocks[room] = isLocked;
         }
 
-        private string RandomEmoticon(string[] emoticons)
+        private string RandomEmoticon(string[] emoticons, double chance)
         {
             var rng = new Random();
-            var idx = rng.Next(emoticons.Length - 1);
-            return $"({emoticons[idx]})";
+
+            if (rng.NextDouble() < chance)
+            {
+                var idx = rng.Next(emoticons.Length - 1);
+                return $"({emoticons[idx]})";
+            }
+
+            return "";
         }
 
         private string RandomNegativeEmoticon()
         {
-            return RandomEmoticon(_negativeEmoticons);
+            return RandomEmoticon(_negativeEmoticons, 0.8);
         }
 
         private string RandomPositiveEmoticon()
         {
-            return RandomEmoticon(_positiveEmoticons);
+            return RandomEmoticon(_positiveEmoticons, 0.2);
         }
     }
 }
