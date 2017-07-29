@@ -30,12 +30,18 @@ namespace XmppBot.Plugins
         }
     }
 
+    public struct Lock
+    {
+        public bool IsLocked;
+        public string Comment;
+    }
+
     [Export(typeof(IXmppBotPlugin))]
     public class Queue : XmppBotPluginBase, IXmppBotPlugin
     {
         private static readonly ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         private readonly Dictionary<string, List<Dibs>> _roomQueues = new Dictionary<string, List<Dibs>>();
-        private readonly Dictionary<string, bool> _roomLocks = new Dictionary<string, bool>();
+        private readonly Dictionary<string, Lock> _roomLocks = new Dictionary<string, Lock>();
         private string _botName;
         private string _batonName;
         private string[] _positiveEmoticons;
@@ -125,7 +131,9 @@ namespace XmppBot.Plugins
 
                 case "lock":
                 case "@+":
-                    return LockQueue(proxy, user, line.Room);
+                    var comment = String.Join(" ", line.Args);
+                    log.Debug($"lock with comment='{comment}'");
+                    return LockQueue(proxy, user, line.Room, comment);
 
                 case "unlock":
                 case "@-":
@@ -144,7 +152,7 @@ namespace XmppBot.Plugins
 
         private string RequestBaton(string proxy, string user, string room)
         {
-            var locked = GetLock(room);
+            var locked = GetIsLocked(room);
 
             if (locked)
             {
@@ -187,7 +195,7 @@ namespace XmppBot.Plugins
 
         private string RescindBaton(string proxy, string user, string room)
         {
-            var locked = GetLock(room);
+            var locked = GetIsLocked(room);
 
             if (locked)
             {
@@ -275,7 +283,7 @@ namespace XmppBot.Plugins
 
         private string RejoinQueue(string proxy, string user, string room)
         {
-            var locked = GetLock(room);
+            var locked = GetIsLocked(room);
 
             if (locked)
             {
@@ -305,7 +313,7 @@ namespace XmppBot.Plugins
 
         private string StealBaton(string proxy, string user, string room)
         {
-            var locked = GetLock(room);
+            var locked = GetIsLocked(room);
 
             if (locked)
             {
@@ -357,9 +365,9 @@ namespace XmppBot.Plugins
                 : $"{proxy} stole the {_batonName} from @{owner.User} for @{user}! {emoticon}";
         }
 
-        private string LockQueue(string proxy, string user, string room)
+        private string LockQueue(string proxy, string user, string room, string comment)
         {
-            var locked = GetLock(room);
+            var locked = GetIsLocked(room);
 
             if (locked)
             {
@@ -370,7 +378,7 @@ namespace XmppBot.Plugins
             
             q.Clear();
             RequestBaton(proxy, user, room);
-            SetLock(room, true);
+            SetLock(room, true, comment);
 
             var emoticon = RandomNegativeEmoticon();
             return proxy == null
@@ -380,7 +388,7 @@ namespace XmppBot.Plugins
 
         private string UnlockQueue(string proxy, string user, string room)
         {
-            var locked = GetLock(room);
+            var locked = GetIsLocked(room);
             var q = GetQueue(room);
 
             if (locked)
@@ -402,17 +410,23 @@ namespace XmppBot.Plugins
         private string QueueStatus(string room)
         {
             var q = GetQueue(room);
-            var locked = GetLock(room);
+            var roomLock = GetLock(room);
 
             if (q.Count == 0)
             {
                 return $"The {_batonName} queue is empty";
             }
 
-            if (locked)
+            if (roomLock.IsLocked)
             {
                 var owner = q[0];
-                return $"{owner.User} has had the {_batonName} locked for {owner.Duration}";
+
+                if (roomLock.Comment == String.Empty)
+                {
+                    return $"{owner.User} has had the {_batonName} locked for {owner.Duration}";
+                }
+
+                return $"{owner.User} has had the {_batonName} locked for {owner.Duration} ({roomLock.Comment})";
             }
 
             var sb = new StringBuilder();
@@ -468,19 +482,24 @@ namespace XmppBot.Plugins
             return _roomQueues[room];
         }
 
-        private bool GetLock(string room)
+        private Lock GetLock(string room)
         {
             if (!_roomLocks.ContainsKey(room))
             {
-                _roomLocks[room] = false;
+                _roomLocks[room] = new Lock();
             }
 
             return _roomLocks[room];
         }
 
-        private void SetLock(string room, bool isLocked)
+        private bool GetIsLocked(string room)
         {
-            _roomLocks[room] = isLocked;
+            return GetLock(room).IsLocked;
+        }
+
+        private void SetLock(string room, bool isLocked, string comment="")
+        {
+            _roomLocks[room] = new Lock {IsLocked = isLocked, Comment = comment};
         }
 
         private string RandomEmoticon(string[] emoticons, double chance)
