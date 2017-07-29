@@ -202,6 +202,7 @@ namespace XmppBot.Plugins
                 bool hadBaton = q[0].User == user;
 
                 q.Remove(dibs);
+                dibs.Pending = false;
 
                 if (hadBaton)
                 {
