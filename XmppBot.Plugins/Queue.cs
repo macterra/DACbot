@@ -384,14 +384,15 @@ namespace XmppBot.Plugins
 
             if (locked)
             {
+                var owner = q[0];
                 q.Clear();
                 SetLock(room, false);
 
                 var emoticon = RandomPositiveEmoticon();
 
                 return proxy == null
-                    ? $"@all {user} has unlocked the {_batonName}! {emoticon}"
-                    : $"@all {proxy} has unlocked the {_batonName}! {emoticon}";
+                    ? $"@all {user} has unlocked the {_batonName} after {owner.Duration}! {emoticon}"
+                    : $"@all {proxy} has unlocked the {_batonName} after {owner.Duration}! {emoticon}";
             }
 
             return $"{_batonName} is not locked. (pokerface)";
